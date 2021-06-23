@@ -18,9 +18,14 @@ namespace Microsoft.Maui
 
 			var handler = view.Handler;
 
+			if (handler?.MauiContext != null &&
+				handler.MauiContext != context)
+			{
+				handler = null;
+			}
+
 			if (handler == null)
 			{
-
 				handler = context.Handlers.GetHandler(view.GetType());
 
 				if (handler == null)
@@ -31,9 +36,10 @@ namespace Microsoft.Maui
 				view.Handler = handler;
 			}
 
-			handler.SetVirtualView(view);
+			if (handler.VirtualView != view)
+				handler.SetVirtualView(view);
 
-			if (!(handler.NativeView is AView result))
+			if (((INativeViewHandler)handler).NativeView is not AView result)
 			{
 				throw new InvalidOperationException($"Unable to convert {view} to {typeof(AView)}");
 			}

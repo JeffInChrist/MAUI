@@ -8,6 +8,7 @@ using Android.Views;
 using Android.Widget;
 using AndroidX.Core.Widget;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AView = Android.Views.View;
 using Point = Microsoft.Maui.Graphics.Point;
@@ -137,8 +138,6 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android
 		{
 			Tracker?.UpdateLayout();
 		}
-
-		public ViewGroup ViewGroup => this;
 
 		AView IVisualElementRenderer.View => this;
 

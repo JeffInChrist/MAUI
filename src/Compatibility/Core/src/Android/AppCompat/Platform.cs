@@ -8,6 +8,7 @@ using Android.OS;
 using Android.Views;
 using Android.Views.Animations;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AView = Android.Views.View;
 
@@ -34,6 +35,15 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.AppCompat
 				var view = bindable as VisualElement;
 				if (view != null)
 					view.IsPlatformEnabled = newvalue != null;
+
+				if (bindable is IView mauiView)
+				{
+					if (mauiView.Handler == null && newvalue is IVisualElementRenderer ver)
+						mauiView.Handler = new RendererToHandlerShim(ver);
+					else if (mauiView.Handler != null && newvalue == null)
+						mauiView.Handler = null;
+				}
+
 			});
 
 		public Platform(Context context) : this(context, false)
@@ -257,7 +267,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.AppCompat
 			{
 				returnValue = new SizeRequest(Size.Zero, Size.Zero);
 			}
-			else if (visualElementRenderer == null && view is IView iView)
+			else if ((visualElementRenderer == null || visualElementRenderer is HandlerToRendererShim) && view is IView iView)
 			{
 				returnValue = iView.Handler.GetDesiredSize(widthConstraint, heightConstraint);
 			}
@@ -342,7 +352,10 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.AppCompat
 				else if (handler is IVisualElementRenderer ver)
 					renderer = ver;
 				else if (handler is INativeViewHandler vh)
+				{
 					renderer = new HandlerToRendererShim(vh);
+					SetRenderer(element, renderer);
+				}
 			}
 
 			renderer.SetElement(element);
@@ -351,7 +364,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.AppCompat
 
 		internal static IVisualElementRenderer CreateRenderer(VisualElement element, AndroidX.Fragment.App.FragmentManager fragmentManager, Context context)
 		{
-			IVisualElementRenderer renderer = Registrar.Registered.GetHandlerForObject<IVisualElementRenderer>(element, context) ?? new DefaultRenderer(context);
+			IVisualElementRenderer renderer = CreateRenderer(element, context);
 
 			var managesFragments = renderer as IManageFragments;
 			managesFragments?.SetFragmentManager(fragmentManager);

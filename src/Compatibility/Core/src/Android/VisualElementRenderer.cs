@@ -9,6 +9,7 @@ using Android.Views;
 using AndroidX.Core.View;
 using Microsoft.Maui.Controls.Compatibility.Platform.Android.FastRenderers;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AView = Android.Views.View;
 using Color = Microsoft.Maui.Graphics.Color;
@@ -197,7 +198,6 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android
 			return control?.Focusable == true ? control : null;
 		}
 
-		public ViewGroup ViewGroup => this;
 		AView IVisualElementRenderer.View => this;
 
 		public event EventHandler<ElementChangedEventArgs<TElement>> ElementChanged;

@@ -219,9 +219,7 @@ namespace Microsoft.Maui.Controls
 
 		Size IFrameworkElement.Measure(double widthConstraint, double heightConstraint)
 		{
-#pragma warning disable CS0618 // Type or member is obsolete	
-			DesiredSize = OnSizeRequest(widthConstraint, heightConstraint).Request;
-#pragma warning restore CS0618 // Type or member is obsolete	
+			DesiredSize = OnMeasure(widthConstraint, heightConstraint).Request;
 			return DesiredSize;
 		}
 
@@ -519,6 +517,28 @@ namespace Microsoft.Maui.Controls
 					fe.InvalidateMeasure();
 				}
 			}
+		}
+
+		protected override Size ArrangeOverride(Rectangle bounds)
+		{
+			var size = base.ArrangeOverride(bounds);
+
+			// The SholdLayoutChildren check will catch impossible sizes (negative widths/heights), not-yet-loaded controls,
+			// and other weirdness that comes from the legacy layouts trying to run layout before the native side is ready. 
+			if (!ShouldLayoutChildren())
+				return size;
+
+			UpdateChildrenLayout();
+
+			foreach (var child in Children)
+			{
+				if (child is IFrameworkElement frameworkElement)
+				{
+					frameworkElement.Handler?.NativeArrange(frameworkElement.Frame);
+				}
+			}
+
+			return Frame.Size;
 		}
 	}
 }

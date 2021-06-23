@@ -62,7 +62,6 @@ namespace Microsoft.Maui.Controls.Compatibility
 		static bool? s_isNougatOrNewer;
 		static bool? s_isOreoOrNewer;
 		static bool? s_isPieOrNewer;
-		static FontManager s_fontManager;
 
 		// One per process; does not change, suitable for loading resources (e.g., ResourceProvider)
 		internal static Context ApplicationContext { get; private set; } = global::Android.App.Application.Context;
@@ -155,9 +154,6 @@ namespace Microsoft.Maui.Controls.Compatibility
 			}
 		}
 
-		internal static IFontManager FontManager =>
-			s_fontManager ??= new FontManager(Registrar.FontRegistrar);
-
 		public static float GetFontSizeNormal(Context context)
 		{
 			float size = 50;
@@ -188,15 +184,15 @@ namespace Microsoft.Maui.Controls.Compatibility
 			return _ColorButtonNormal;
 		}
 
-		public static void Init(IActivationState activationState) =>
-			Init(activationState.Context, activationState.SavedInstance);
+		public static void Init(IActivationState activationState, InitializationOptions? options = null) =>
+			Init(activationState.Context, activationState.SavedInstance, options);
 
 		// Provide backwards compat for Forms.Init and AndroidActivity
 		// Why is bundle a param if never used?
 		public static void Init(Context activity, Bundle bundle) =>
 			Init(new MauiContext(activity), bundle);
 
-		public static void Init(IMauiContext context, Bundle bundle)
+		public static void Init(IMauiContext context, Bundle bundle, InitializationOptions? options = null)
 		{
 			Assembly resourceAssembly;
 
@@ -205,7 +201,7 @@ namespace Microsoft.Maui.Controls.Compatibility
 			Profile.FrameEnd("Assembly.GetCallingAssembly");
 
 			Profile.FrameBegin();
-			SetupInit(context, resourceAssembly, null);
+			SetupInit(context, resourceAssembly, options);
 			Profile.FrameEnd();
 		}
 
@@ -255,28 +251,11 @@ namespace Microsoft.Maui.Controls.Compatibility
 
 		static bool IsInitializedRenderers;
 
-
-		internal static void RegisterCompatRenderers(
-			Assembly[] assemblies,
-			Assembly defaultRendererAssembly,
-			Action<Type> viewRegistered)
+		// Once we get essentials/cg converted to using startup.cs
+		// we will delete all the renderer code inside this file
+		internal static void RenderersRegistered()
 		{
-			if (IsInitializedRenderers)
-				return;
-
 			IsInitializedRenderers = true;
-
-			// Only need to do this once
-			Registrar.RegisterAll(
-				assemblies,
-				defaultRendererAssembly,
-				new[] {
-						typeof(ExportRendererAttribute),
-						typeof(ExportCellAttribute),
-						typeof(ExportImageSourceHandlerAttribute),
-						typeof(ExportFontAttribute)
-					}, default(InitializationFlags),
-				viewRegistered);
 		}
 
 		internal static void RegisterCompatRenderers(InitializationOptions? maybeOptions)
@@ -504,12 +483,12 @@ namespace Microsoft.Maui.Controls.Compatibility
 					if (sdkVersion <= 10)
 					{
 						// legacy theme button pressed color
-						rc = Color.FromHex("#fffeaa0c");
+						rc = Color.FromArgb("#fffeaa0c");
 					}
 					else
 					{
 						// Holo dark light blue
-						rc = Color.FromHex("#ff33b5e5");
+						rc = Color.FromArgb("#ff33b5e5");
 					}
 				}
 			}
@@ -683,12 +662,6 @@ namespace Microsoft.Maui.Controls.Compatibility
 
 			public void BeginInvokeOnMainThread(Action action)
 			{
-				if (_context.IsDesignerContext())
-				{
-					action();
-					return;
-				}
-
 				if (s_handler == null || s_handler.Looper != Looper.MainLooper)
 				{
 					s_handler = new Handler(Looper.MainLooper);
@@ -875,7 +848,8 @@ namespace Microsoft.Maui.Controls.Compatibility
 
 			public IIsolatedStorageFile GetUserStoreForApplication()
 			{
-				return new _IsolatedStorageFile(IsolatedStorageFile.GetUserStoreForApplication());
+				throw new NotImplementedException("GetUserStoreForApplication currently not available https://github.com/dotnet/runtime/issues/52332");
+				//return new _IsolatedStorageFile(IsolatedStorageFile.GetUserStoreForApplication());
 			}
 
 			public bool IsInvokeRequired

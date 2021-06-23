@@ -9,6 +9,7 @@ using AndroidX.Core.Widget;
 using AndroidX.RecyclerView.Widget;
 using AndroidX.SwipeRefreshLayout.Widget;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AView = Android.Views.View;
 using AWebView = Android.Webkit.WebView;
@@ -33,8 +34,6 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android
 		}
 
 		public VisualElementTracker Tracker { get; private set; }
-
-		public ViewGroup ViewGroup => this;
 
 		public AView View => this;
 

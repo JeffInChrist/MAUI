@@ -1,9 +1,8 @@
 #nullable enable
 using System;
-#if __IOS__
+using System.Runtime.CompilerServices;
+#if __IOS__ || MACCATALYST
 using NativeView = UIKit.UIView;
-#elif __MACOS__
-using NativeView = AppKit.NSView;
 #elif MONOANDROID
 using NativeView = Android.Views.View;
 #elif WINDOWS
@@ -14,7 +13,7 @@ using NativeView = System.Object;
 
 namespace Microsoft.Maui.Handlers
 {
-	public abstract partial class ViewHandler<TVirtualView, TNativeView> : ViewHandler<TVirtualView>,
+	public abstract partial class ViewHandler<TVirtualView, TNativeView> : ViewHandler,
 		IViewHandler
 		where TVirtualView : class, IView
 #if !NETSTANDARD || IOS || ANDROID || WINDOWS
@@ -27,6 +26,12 @@ namespace Microsoft.Maui.Handlers
 		protected PropertyMapper _mapper;
 		static bool HasSetDefaults;
 
+		[HotReload.OnHotReload]
+		static void OnHotReload()
+		{
+			HasSetDefaults = false;
+		}
+
 		protected ViewHandler(PropertyMapper mapper)
 		{
 			_ = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -36,9 +41,9 @@ namespace Microsoft.Maui.Handlers
 
 		protected abstract TNativeView CreateNativeView();
 
-		public new TNativeView? NativeView
+		public new TNativeView NativeView
 		{
-			get => (TNativeView?)base.NativeView;
+			get => (TNativeView?)base.NativeView ?? throw new InvalidOperationException($"NativeView cannot be null here");
 			private set => base.NativeView = value;
 		}
 
@@ -46,21 +51,21 @@ namespace Microsoft.Maui.Handlers
 		{
 			_ = view ?? throw new ArgumentNullException(nameof(view));
 
-			if (VirtualView == view)
+			if (base.VirtualView == view)
 				return;
 
-			if (VirtualView?.Handler != null)
+			if (base.VirtualView?.Handler != null && base.VirtualView.Handler != this)
 				VirtualView.Handler = null;
 
-			bool setupNativeView = VirtualView == null;
+			bool setupNativeView = base.VirtualView == null;
 
 			VirtualView = (TVirtualView)view;
-			NativeView ??= CreateNativeView();
+			NativeView = (TNativeView?)base.NativeView ?? CreateNativeView();
 
-			if (VirtualView != null && VirtualView.Handler != this)
+			if (VirtualView.Handler != this)
 				VirtualView.Handler = this;
 
-			if (setupNativeView && NativeView != null)
+			if (setupNativeView)
 			{
 				ConnectHandler(NativeView);
 			}
@@ -81,9 +86,7 @@ namespace Microsoft.Maui.Handlers
 			{
 				var map = imv.GetPropertyMapperOverrides();
 				var instancePropertyMapper = map as PropertyMapper<TVirtualView>;
-				if (map != null && instancePropertyMapper == null)
-				{
-				}
+
 				if (instancePropertyMapper != null)
 				{
 					instancePropertyMapper.Chained = _defaultMapper;
@@ -96,7 +99,7 @@ namespace Microsoft.Maui.Handlers
 
 		void IViewHandler.DisconnectHandler()
 		{
-			if (NativeView != null && VirtualView != null)
+			if (base.NativeView != null && base.VirtualView != null)
 				DisconnectHandler(NativeView);
 		}
 
@@ -111,22 +114,30 @@ namespace Microsoft.Maui.Handlers
 		}
 
 		public override void UpdateValue(string property)
-			=> _mapper?.UpdateProperty(this, VirtualView, property);
-
-		protected virtual void SetupDefaults(TNativeView nativeView) { }
-	}
-
-	public abstract partial class ViewHandler<TVirtualView> : ViewHandler
-		where TVirtualView : class, IView
-	{
-		internal ViewHandler()
 		{
+			if (base.VirtualView == null)
+				return;
+
+			_mapper?.UpdateProperty(this, VirtualView, property);
 		}
 
-		public new TVirtualView? VirtualView
+		protected virtual void SetupDefaults(TNativeView nativeView) { }
+
+
+		public new TVirtualView VirtualView
 		{
-			get => (TVirtualView?)base.VirtualView;
+			get => (TVirtualView?)base.VirtualView ?? throw new InvalidOperationException($"VirtualView cannot be null here");
 			private protected set => base.VirtualView = value;
+		}
+
+		IView? IViewHandler.VirtualView
+		{
+			get => base.VirtualView;
+		}
+
+		object? IViewHandler.NativeView
+		{
+			get => base.NativeView;
 		}
 	}
 }

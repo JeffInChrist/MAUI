@@ -1,6 +1,5 @@
 ﻿using System;
 using Foundation;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Platform.iOS;
 using UIKit;
@@ -9,8 +8,6 @@ namespace Microsoft.Maui.Handlers
 {
 	public partial class EntryHandler : ViewHandler<IEntry, MauiTextField>
 	{
-		static readonly int BaseHeight = 30;
-
 		static UIColor? DefaultTextColor;
 
 		protected override MauiTextField CreateNativeView()
@@ -24,6 +21,9 @@ namespace Microsoft.Maui.Handlers
 
 		protected override void ConnectHandler(MauiTextField nativeView)
 		{
+			base.ConnectHandler(nativeView);
+
+			nativeView.ShouldReturn = OnShouldReturn;
 			nativeView.EditingChanged += OnEditingChanged;
 			nativeView.EditingDidEnd += OnEditingEnded;
 			nativeView.TextPropertySet += OnTextPropertySet;
@@ -32,6 +32,8 @@ namespace Microsoft.Maui.Handlers
 
 		protected override void DisconnectHandler(MauiTextField nativeView)
 		{
+			base.DisconnectHandler(nativeView);
+
 			nativeView.EditingChanged -= OnEditingChanged;
 			nativeView.EditingDidEnd -= OnEditingEnded;
 			nativeView.TextPropertySet -= OnTextPropertySet;
@@ -42,9 +44,6 @@ namespace Microsoft.Maui.Handlers
 		{
 			DefaultTextColor = nativeView.TextColor;
 		}
-
-		public override Size GetDesiredSize(double widthConstraint, double heightConstraint) =>
-			new SizeRequest(new Size(widthConstraint, BaseHeight));
 
 		public static void MapText(EntryHandler handler, IEntry entry)
 		{
@@ -67,6 +66,11 @@ namespace Microsoft.Maui.Handlers
 		public static void MapHorizontalTextAlignment(EntryHandler handler, IEntry entry)
 		{
 			handler.NativeView?.UpdateHorizontalTextAlignment(entry);
+		}
+
+		public static void MapVerticalTextAlignment(EntryHandler handler, IEntry entry)
+		{
+			handler?.NativeView?.UpdateVerticalTextAlignment(entry);
 		}
 
 		public static void MapIsTextPredictionEnabled(EntryHandler handler, IEntry entry)
@@ -123,9 +127,30 @@ namespace Microsoft.Maui.Handlers
 			handler.NativeView?.UpdateCharacterSpacing(entry);
 		}
 
+		public static void MapCursorPosition(EntryHandler handler, IEntry entry)
+		{
+			handler.NativeView?.UpdateCursorPosition(entry);
+		}
+
+		public static void MapSelectionLength(EntryHandler handler, IEntry entry)
+		{
+			handler.NativeView?.UpdateSelectionLength(entry);
+		}
+
 		public static void MapClearButtonVisibility(EntryHandler handler, IEntry entry)
 		{
 			handler.NativeView?.UpdateClearButtonVisibility(entry);
+		}
+
+		protected virtual bool OnShouldReturn(UITextField view)
+		{
+			view.ResignFirstResponder();
+
+			// TODO: Focus next View
+
+			VirtualView?.Completed();
+
+			return false;
 		}
 
 		void OnEditingChanged(object? sender, EventArgs e) => OnTextChanged();

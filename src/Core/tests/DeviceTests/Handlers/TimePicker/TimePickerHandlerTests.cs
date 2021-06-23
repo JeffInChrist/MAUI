@@ -10,9 +10,12 @@ namespace Microsoft.Maui.DeviceTests
 	public partial class TimePickerHandlerTests : HandlerTestBase<TimePickerHandler, TimePickerStub>
 	{
 		[Fact(DisplayName = "Time Initializes Correctly")]
-		public async Task IsToggledInitializesCorrectly()
+		public async Task TimeInitializesCorrectly()
 		{
-			var timePicker = new TimePickerStub();
+			var timePicker = new TimePickerStub
+			{
+				Format = "HH:mm"
+			};
 
 			var time = new TimeSpan(17, 0, 0);
 
@@ -36,20 +39,20 @@ namespace Microsoft.Maui.DeviceTests
 		}
 
 		[Theory(DisplayName = "Font Attributes Initialize Correctly")]
-		[InlineData(FontAttributes.None, false, false)]
-		[InlineData(FontAttributes.Bold, true, false)]
-		[InlineData(FontAttributes.Italic, false, true)]
-		[InlineData(FontAttributes.Bold | FontAttributes.Italic, true, true)]
-		public async Task FontAttributesInitializeCorrectly(FontAttributes attributes, bool isBold, bool isItalic)
+		[InlineData(FontWeight.Regular, false, false)]
+		[InlineData(FontWeight.Bold, true, false)]
+		[InlineData(FontWeight.Regular, false, true)]
+		[InlineData(FontWeight.Bold, true, true)]
+		public async Task FontAttributesInitializeCorrectly(FontWeight weight, bool isBold, bool isItalic)
 		{
 			var timePicker = new TimePickerStub()
 			{
 				Time = new TimeSpan(17, 0, 0),
-				Font = Font.OfSize("Arial", 10).WithAttributes(attributes)
+				Font = Font.OfSize("Arial", 10, weight, isItalic ? FontSlant.Italic : FontSlant.Default)
 			};
 
-			await ValidatePropertyInitValue(timePicker, () => timePicker.Font.FontAttributes.HasFlag(FontAttributes.Bold), GetNativeIsBold, isBold);
-			await ValidatePropertyInitValue(timePicker, () => timePicker.Font.FontAttributes.HasFlag(FontAttributes.Italic), GetNativeIsItalic, isItalic);
+			await ValidatePropertyInitValue(timePicker, () => timePicker.Font.Weight == FontWeight.Bold, GetNativeIsBold, isBold);
+			await ValidatePropertyInitValue(timePicker, () => timePicker.Font.FontSlant == FontSlant.Italic, GetNativeIsItalic, isItalic);
 		}
 	}
 }

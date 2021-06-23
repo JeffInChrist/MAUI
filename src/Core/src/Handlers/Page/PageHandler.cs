@@ -1,8 +1,4 @@
 ﻿#nullable enable
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Microsoft.Maui.Handlers
 {
 	public partial class PageHandler : IViewHandler
@@ -10,6 +6,13 @@ namespace Microsoft.Maui.Handlers
 		public static PropertyMapper<IPage, PageHandler> PageMapper = new PropertyMapper<IPage, PageHandler>(ViewHandler.ViewMapper)
 		{
 			[nameof(IPage.Title)] = MapTitle,
+			[nameof(IPage.Content)] = MapContent,
+#if __IOS__
+			Actions =
+			{
+				[nameof(IFrameworkElement.Frame)] = MapFrame,
+			}
+#endif
 		};
 
 		public PageHandler() : base(PageMapper)

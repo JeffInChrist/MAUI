@@ -31,6 +31,7 @@ namespace Microsoft.Maui
 		public static void UpdateTextColor(this TextView textView, ITextStyle textStyle, ColorStateList? defaultColor)
 		{
 			var textColor = textStyle.TextColor;
+
 			if (textColor == null)
 				textView.SetTextColor(defaultColor);
 			else
@@ -44,7 +45,7 @@ namespace Microsoft.Maui
 			var tf = fontManager.GetTypeface(font);
 			textView.Typeface = tf;
 
-			var sp = fontManager.GetScaledPixel(font);
+			var sp = fontManager.GetFontSize(font);
 			textView.SetTextSize(ComplexUnitType.Sp, sp);
 		}
 

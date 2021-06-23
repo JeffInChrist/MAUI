@@ -6,6 +6,7 @@ using Android.Graphics.Drawables;
 using Android.Views;
 using AndroidX.CardView.Widget;
 using AndroidX.Core.View;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AColor = Android.Graphics.Color;
 using AView = Android.Views.View;
@@ -62,7 +63,6 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.FastRenderers
 		}
 
 		VisualElement IVisualElementRenderer.Element => Element;
-		ViewGroup IVisualElementRenderer.ViewGroup => this;
 		AView IVisualElementRenderer.View => this;
 
 		SizeRequest IVisualElementRenderer.GetDesiredSize(int widthConstraint, int heightConstraint)

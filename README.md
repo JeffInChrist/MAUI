@@ -1,15 +1,14 @@
 # Introducing .NET Multi-platform App UI (MAUI)
 
-.NET MAUI is:
+.NET Multi-platform App UI (.NET MAUI) is a cross-platform framework for creating native mobile and desktop apps with C# and XAML. Using .NET MAUI, you can develop apps that can run on Android, iOS, macOS, and Windows from a single shared code-base. [Read More](https://docs.microsoft.com/en-us/dotnet/maui/what-is-maui)
 
-* Multi-platform native UI
-* Deploy to multiple devices across mobile & desktop
-* Using a single project, single codebase
-* Evolution of [Xamarin.Forms](https://github.com/xamarin/xamarin.forms)
-* .NET 6
+## Getting Started ##
+
+* [Install .NET MAUI](https://github.com/dotnet/maui/wiki/Getting-Started)
+* [MAUI documentation](https://docs.microsoft.com/en-us/dotnet/maui)
+* [MAUI samples](https://github.com/dotnet/maui-samples)
 
 ## Build Status ##
-
 
 | Private  | Public |
 |--|--|
@@ -19,30 +18,31 @@
 ## Maui.sln
 
 ### SDKS required
-- Install the SDKs listed here https://github.com/xamarin/net6-samples
 
-- And/or run the following
-
-```
-dotnet tool install Cake.Tool -g
-```
+- Install the SDKs listed here https://github.com/dotnet/maui-samples
 
 ### Running
 
 #### IDE
-- If you have Visual Studio 16.9 P4 installed you can open `Maui.sln` and run it from there.
+
+- If you have Visual Studio 16.9 P4 or newer installed you can open `Maui.sln` and run it from there.
 
 #### .NET 6
 
 You can run a `Cake` target to bootstrap .NET 6 in `bin\dotnet` and launch Visual Studio:
 
 ```dotnetcli
+dotnet tool restore
 dotnet cake --target=VS-NET6
 ```
-_NOTE: VS Mac is not yet supported._
+_NOTES:_
+- _VS Mac is not yet supported._
+- _If the IDE doesn't show any android devices try unloading and reloading the `Sample.Droid-net6` project._
 
 You can also run commands individually:
 ```dotnetcli
+# install local tools required to build (cake, pwsh, etc..)
+dotnet tool restore
 # Provision .NET 6 in bin\dotnet
 dotnet build src\DotNet\DotNet.csproj
 # Builds Maui MSBuild tasks
@@ -50,7 +50,7 @@ dotnet build src\DotNet\DotNet.csproj
 # Builds the rest of Maui
 .\bin\dotnet\dotnet build Microsoft.Maui-net6.sln
 # (Windows-only) to launch Visual Studio
-.\eng\dogfood.ps1
+dotnet cake --target=VS-DOGFOOD
 ```
 
 To build & run .NET 6 sample apps, you will also need to use `.\bin\dotnet\dotnet`:
@@ -66,7 +66,15 @@ Try out a "single project", you will need the `-f` switch to choose the platform
 .\bin\dotnet\dotnet build src\Controls\samples\Controls.Sample.SingleProject\Maui.Controls.Sample.SingleProject.csproj -t:Run -f net6.0-ios
 ```
 
+To build and run Blazor Desktop samples, check out the [Blazor Desktop](https://github.com/dotnet/maui/wiki/Blazor-Desktop) wiki topic.
+
 ## Current News
+
+[June 17, 2021 - Announcing .NET MAUI Preview 5](https://devblogs.microsoft.com/dotnet/announcing-net-maui-preview-5/)
+
+[May 25, 2021 - Announcing .NET MAUI Preview 4](https://devblogs.microsoft.com/dotnet/announcing-net-maui-preview-4/)
+
+[May 24, 2021 - Azure DevOps Podcast - Interview with David Ortinau](http://azuredevopspodcast.clear-measure.com/david-ortinau-on-multi-platform-app-development-using-net-maui-episode-142)
 
 [April 21, 2021 - WinUI Community Live Stream](https://youtu.be/SyLXctia1B0?t=777)
 

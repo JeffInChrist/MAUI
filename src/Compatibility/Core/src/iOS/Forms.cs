@@ -39,11 +39,6 @@ namespace Microsoft.Maui.Controls.Compatibility
 
 		public static bool IsInitialized { get; private set; }
 
-		static IFontManager s_fontManager;
-
-		internal static IFontManager FontManager =>
-			s_fontManager ??= new FontManager(Microsoft.Maui.Controls.Internals.Registrar.FontRegistrar);
-
 #if __MOBILE__
 		static bool? s_isiOS9OrNewer;
 		static bool? s_isiOS10OrNewer;
@@ -114,6 +109,12 @@ namespace Microsoft.Maui.Controls.Compatibility
 			}
 		}
 
+		// Once we get essentials/cg converted to using startup.cs
+		// we will delete all the renderer code inside this file
+		internal static void RenderersRegistered()
+		{
+			IsInitializedRenderers = true;
+		}
 
 		internal static bool RespondsToSetNeedsUpdateOfHomeIndicatorAutoHidden
 		{
@@ -186,8 +187,8 @@ namespace Microsoft.Maui.Controls.Compatibility
 		public static void Init(InitializationOptions options) =>
 			SetupInit(new MauiContext(), options);
 
-		public static void Init(IActivationState activationState) =>
-			SetupInit(activationState.Context);
+		public static void Init(IActivationState activationState, InitializationOptions? options = null) =>
+			SetupInit(activationState.Context, options);
 
 		static void SetupInit(IMauiContext context, InitializationOptions? maybeOptions = null)
 		{
@@ -202,7 +203,7 @@ namespace Microsoft.Maui.Controls.Compatibility
 				// Only need to do this once
 				Log.Listeners.Add(new DelegateLogListener((c, m) => Trace.WriteLine(m, c)));
 			}
-			
+
 #if __MOBILE__
 			Device.SetIdiom(UIDevice.CurrentDevice.UserInterfaceIdiom == UIUserInterfaceIdiom.Pad ? TargetIdiom.Tablet : TargetIdiom.Phone);
 			Device.SetFlowDirection(UIApplication.SharedApplication.UserInterfaceLayoutDirection.ToFlowDirection());
@@ -273,29 +274,6 @@ namespace Microsoft.Maui.Controls.Compatibility
 					typeof(ExportFontAttribute)
 				});
 			}
-		}
-
-		internal static void RegisterCompatRenderers(
-			Assembly[] assemblies,
-			Assembly defaultRendererAssembly,
-			Action<Type> viewRegistered)
-		{
-			if (IsInitializedRenderers)
-				return;
-
-			IsInitializedRenderers = true;
-
-			// Only need to do this once
-			Controls.Internals.Registrar.RegisterAll(
-				assemblies,
-				defaultRendererAssembly,
-				new[] {
-						typeof(ExportRendererAttribute),
-						typeof(ExportCellAttribute),
-						typeof(ExportImageSourceHandlerAttribute),
-						typeof(ExportFontAttribute)
-					}, default(InitializationFlags),
-				viewRegistered);
 		}
 
 		public static event EventHandler<ViewInitializedEventArgs> ViewInitialized;
@@ -835,7 +813,7 @@ namespace Microsoft.Maui.Controls.Compatibility
 							return OSAppTheme.Unspecified;
 					};
 #else
-                    return AppearanceIsDark() ? OSAppTheme.Dark : OSAppTheme.Light;
+					return AppearanceIsDark() ? OSAppTheme.Dark : OSAppTheme.Light;
 #endif
 				}
 			}

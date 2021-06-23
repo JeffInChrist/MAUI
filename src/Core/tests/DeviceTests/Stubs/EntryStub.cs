@@ -31,14 +31,26 @@ namespace Microsoft.Maui.DeviceTests.Stubs
 
 		public TextAlignment HorizontalTextAlignment { get; set; }
 
+		public TextAlignment VerticalTextAlignment { get; set; }
+
 		public ReturnType ReturnType { get; set; }
+
 		public ClearButtonVisibility ClearButtonVisibility { get; set; }
 
 		public event EventHandler<StubPropertyChangedEventArgs<string>> TextChanged;
+
+		public event EventHandler Completed;
+
+		void IEntry.Completed() =>
+			Completed?.Invoke(this, EventArgs.Empty);
 
 		void OnTextChanged(string oldValue, string newValue) =>
 			TextChanged?.Invoke(this, new StubPropertyChangedEventArgs<string>(oldValue, newValue));
 
 		public Keyboard Keyboard { get; set; } = Keyboard.Default;
+
+		public int CursorPosition { get; set; }
+
+		public int SelectionLength { get; set; }
 	}
 }

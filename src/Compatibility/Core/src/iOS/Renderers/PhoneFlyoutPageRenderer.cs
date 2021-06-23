@@ -1,11 +1,12 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
-using UIKit;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
-using PointF = CoreGraphics.CGPoint;
 using Microsoft.Maui.Graphics;
+using UIKit;
+using PointF = CoreGraphics.CGPoint;
 
 namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 {
@@ -119,6 +120,11 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 		public override void ViewDidLayoutSubviews()
 		{
 			base.ViewDidLayoutSubviews();
+
+
+			// TODO MAUI: Is this correct?
+			if (Element.Width == -1 && Element.Height == -1)
+				Element.Layout(new Rectangle(Element.X, Element.Y, View.Bounds.Width, View.Bounds.Height));
 
 			LayoutChildren(false);
 		}
@@ -375,7 +381,8 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 			if (Forms.RespondsToSetNeedsUpdateOfHomeIndicatorAutoHidden)
 				SetNeedsUpdateOfHomeIndicatorAutoHidden();
 
-			detailRenderer.ViewController.View.Superview.BackgroundColor = Microsoft.Maui.Graphics.Colors.Black.ToUIColor();
+			if (detailRenderer.ViewController.View.Superview != null)
+				detailRenderer.ViewController.View.Superview.BackgroundColor = Microsoft.Maui.Graphics.Colors.Black.ToUIColor();
 
 			ToggleAccessibilityElementsHidden();
 		}
@@ -401,7 +408,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 		public override UIViewController ChildViewControllerForStatusBarHidden()
 		{
 			if (((FlyoutPage)Element).Detail != null)
-				return (UIViewController)Platform.GetRenderer(((FlyoutPage)Element).Detail);
+				return Platform.GetRenderer(((FlyoutPage)Element).Detail).ViewController;
 			else
 				return base.ChildViewControllerForStatusBarHidden();
 		}
@@ -411,7 +418,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.iOS
 			get
 			{
 				if (((FlyoutPage)Element).Detail != null)
-					return (UIViewController)Platform.GetRenderer(((FlyoutPage)Element).Detail);
+					return Platform.GetRenderer(((FlyoutPage)Element).Detail).ViewController;
 				else
 					return base.ChildViewControllerForStatusBarHidden();
 			}

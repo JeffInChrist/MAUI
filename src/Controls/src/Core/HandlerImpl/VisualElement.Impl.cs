@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
 
@@ -10,7 +7,8 @@ namespace Microsoft.Maui.Controls
 {
 	public partial class VisualElement : IFrameworkElement
 	{
-		private IViewHandler _handler;
+		Semantics _semantics;
+		IViewHandler _handler;
 
 		public Rectangle Frame => Bounds;
 
@@ -19,8 +17,19 @@ namespace Microsoft.Maui.Controls
 			get => _handler;
 			set
 			{
-				_handler = value;
-				IsPlatformEnabled = _handler != null;
+				SetHandler(value);
+			}
+		}
+
+		Paint IFrameworkElement.Background
+		{
+			get
+			{
+				if (!Brush.IsNullOrEmpty(Background))
+					return Background;
+				if (BackgroundColor.IsNotDefault())
+					return new SolidColorBrush(BackgroundColor);
+				return null;
 			}
 		}
 
@@ -48,9 +57,7 @@ namespace Microsoft.Maui.Controls
 		// the interface has to be explicitly implemented to avoid conflict with the old Arrange method
 		protected virtual Size ArrangeOverride(Rectangle bounds)
 		{
-			// Setting Bounds here is equivalent to setting the Frame
 			Bounds = this.ComputeFrame(bounds);
-
 			return Frame.Size;
 		}
 
@@ -66,9 +73,7 @@ namespace Microsoft.Maui.Controls
 
 		// InvalidateMeasureOverride provides a way to allow subclasses (e.g., Layout) to override InvalidateMeasure even though
 		// the interface has to be explicitly implemented to avoid conflict with the VisualElement.InvalidateMeasure method
-		protected virtual void InvalidateMeasureOverride()
-		{
-		}
+		protected virtual void InvalidateMeasureOverride() => Handler?.UpdateValue(nameof(IFrameworkElement.InvalidateMeasure));
 
 		void IFrameworkElement.InvalidateArrange()
 		{
@@ -91,8 +96,9 @@ namespace Microsoft.Maui.Controls
 		Primitives.LayoutAlignment IFrameworkElement.HorizontalLayoutAlignment => default;
 		Primitives.LayoutAlignment IFrameworkElement.VerticalLayoutAlignment => default;
 
-		Maui.Semantics _semantics;
-		Maui.Semantics IFrameworkElement.Semantics
+		Visibility IFrameworkElement.Visibility => IsVisible.ToVisibility();
+
+		Semantics IFrameworkElement.Semantics
 		{
 			get => _semantics;
 		}
@@ -100,9 +106,58 @@ namespace Microsoft.Maui.Controls
 		// We don't want to initialize Semantics until someone explicitly 
 		// wants to modify some aspect of the semantics class
 		internal Semantics SetupSemantics() =>
-			_semantics ??= new Maui.Semantics();
+			_semantics ??= new Semantics();
 
 		double IFrameworkElement.Width => WidthRequest;
 		double IFrameworkElement.Height => HeightRequest;
+
+		public event EventHandler AttachingHandler;
+		public event EventHandler AttachedHandler;
+		public event EventHandler DetachingHandler;
+		public event EventHandler DetachedHandler;
+
+		void SetHandler(IViewHandler newHandler)
+		{
+			if (newHandler == _handler)
+				return;
+
+			var previousHandler = _handler;
+
+			if (_handler != null)
+			{
+				DetachingHandler?.Invoke(this, EventArgs.Empty);
+				OnDetachingHandler();
+			}
+
+			if (newHandler != null)
+			{
+				AttachingHandler?.Invoke(this, EventArgs.Empty);
+				OnAttachingHandler();
+			}
+
+			_handler = newHandler;
+
+			if (_handler?.VirtualView != this)
+				_handler?.SetVirtualView((IView)this);
+
+			IsPlatformEnabled = _handler != null;
+
+			if (_handler != null)
+			{
+				AttachedHandler?.Invoke(this, EventArgs.Empty);
+				OnAttachedHandler();
+			}
+
+			if (previousHandler != null)
+			{
+				DetachedHandler?.Invoke(this, EventArgs.Empty);
+				OnDetachedHandler();
+			}
+		}
+
+		public virtual void OnAttachingHandler() { }
+		public virtual void OnAttachedHandler() { }
+		public virtual void OnDetachingHandler() { }
+		public virtual void OnDetachedHandler() { }
 	}
 }

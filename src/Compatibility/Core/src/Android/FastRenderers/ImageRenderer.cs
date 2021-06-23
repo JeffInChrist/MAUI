@@ -5,6 +5,7 @@ using Android.Graphics;
 using Android.Views;
 using AndroidX.Core.View;
 using Microsoft.Maui.Controls.Internals;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Graphics;
 using AImageView = Android.Widget.ImageView;
 using AView = Android.Views.View;
@@ -180,8 +181,6 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.FastRenderers
 		AView IVisualElementRenderer.View => this;
 
 		AView ITabStop.TabStop => this;
-
-		ViewGroup IVisualElementRenderer.ViewGroup => null;
 
 		void IImageRendererController.SkipInvalidate() => _skipInvalidate = true;
 		void IImageRendererController.SetFormsAnimationDrawable(IFormsAnimationDrawable value)

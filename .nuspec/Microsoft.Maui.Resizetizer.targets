@@ -32,21 +32,34 @@
         AssemblyFile="$(_ResizetizerTaskAssemblyName)"
         TaskName="Microsoft.Maui.Resizetizer.GenerateSplashStoryboard" />
 
+    <UsingTask
+        AssemblyFile="$(_ResizetizerTaskAssemblyName)"
+        TaskName="Microsoft.Maui.Resizetizer.GenerateSplashAssets" />
+
+    <UsingTask
+        AssemblyFile="$(_ResizetizerTaskAssemblyName)"
+        TaskName="Microsoft.Maui.Resizetizer.GetMauiAssetPath" />
+
     <PropertyGroup>
         <CleanDependsOn>
             $(CleanDependsOn);
             _CleanResizetizer;
         </CleanDependsOn>
 
-        <_ResizetizerInputsFile>$(IntermediateOutputPath)resizetizer.inputs</_ResizetizerInputsFile>
-        <_ResizetizerStampFile>$(IntermediateOutputPath)resizetizer.stamp</_ResizetizerStampFile>
+        <_ResizetizerInputsFile>$(IntermediateOutputPath)mauiimage.inputs</_ResizetizerInputsFile>
+        <_ResizetizerStampFile>$(IntermediateOutputPath)mauiimage.stamp</_ResizetizerStampFile>
         <_MauiFontInputsFile>$(IntermediateOutputPath)mauifont.inputs</_MauiFontInputsFile>
         <_MauiFontStampFile>$(IntermediateOutputPath)mauifont.stamp</_MauiFontStampFile>
         <_MauiSplashInputsFile>$(IntermediateOutputPath)mauisplash.inputs</_MauiSplashInputsFile>
         <_MauiSplashStampFile>$(IntermediateOutputPath)mauisplash.stamp</_MauiSplashStampFile>
-        <_MauiIntermediateColors>$(IntermediateOutputPath)sp\maui_colors.xml</_MauiIntermediateColors>
-        <_MauiIntermediateDrawable>$(IntermediateOutputPath)sp\maui_splash_image.xml</_MauiIntermediateDrawable>
-        <_MauiIntermediateStoryboard>$(IntermediateOutputPath)sp\MauiSplash.storyboard</_MauiIntermediateStoryboard>
+
+        <_ResizetizerIntermediateOutputRoot>$(IntermediateOutputPath)resizetizer\</_ResizetizerIntermediateOutputRoot>
+        <_MauiIntermediateImages>$(_ResizetizerIntermediateOutputRoot)r\</_MauiIntermediateImages>
+        <_MauiIntermediateFonts>$(_ResizetizerIntermediateOutputRoot)f\</_MauiIntermediateFonts>
+        <_MauiIntermediateSplashScreen>$(_ResizetizerIntermediateOutputRoot)sp\</_MauiIntermediateSplashScreen>
+        <_MauiIntermediateColors>$(_MauiIntermediateSplashScreen)maui_colors.xml</_MauiIntermediateColors>
+        <_MauiIntermediateDrawable>$(_MauiIntermediateSplashScreen)maui_splash_image.xml</_MauiIntermediateDrawable>
+        <_MauiIntermediateStoryboard>$(_MauiIntermediateSplashScreen)MauiSplash.storyboard</_MauiIntermediateStoryboard>
 
         <ResizetizerIncludeSelfProject Condition="'$(ResizetizerIncludeSelfProject)' == ''">False</ResizetizerIncludeSelfProject>
 
@@ -167,7 +180,7 @@
             <MauiItem Include="@(MauiImage)" ItemGroupName="MauiImage" Condition="'%(MauiImage.ForegroundFile)' == ''" />
             <MauiItem Include="@(MauiImage)" ItemGroupName="MauiImage" Condition="'%(MauiImage.ForegroundFile)' != ''" ForegroundFile="$([System.IO.Path]::GetFullPath('%(MauiImage.ForegroundFile)'))" />
             <MauiItem Include="@(MauiFont)"  ItemGroupName="MauiFont" />
-            <MauiItem Include="@(MauiAsset)" ItemGroupName="MauiAsset" />
+            <MauiItem Include="@(MauiAsset)" ItemGroupName="MauiAsset" ProjectDirectory="$(MSBuildProjectDirectory)" />
             <MauiItem Include="@(MauiSplashScreen)" ItemGroupName="MauiSplashScreen" />
         </ItemGroup>
 
@@ -197,6 +210,7 @@
             Targets="GetMauiItems"
             Projects="@(ProjectReference)"
             BuildInParallel="true"
+            Properties="TargetFramework=$(TargetFramework)"
             SkipNonexistentProjects="true"
             SkipNonexistentTargets="true">
             <Output
@@ -223,7 +237,7 @@
         <!-- This allows us to invalidate the build based on not just input image files changing but project item metadata as well -->
         <WriteLinesToFile
             File="$(_ResizetizerInputsFile)"
-            Lines="@(MauiImage->'File=%(Identity);Link=%(Link);BaseSize=%(BaseSize);Resize=%(Resize);TintColor=%(TintColor);IsAppIcon=%(IsAppIcon);ForegroundScale=%(ForegroundScale);ForegroundFile=%(ForegroundFile)')"
+            Lines="@(MauiImage->'File=%(Identity);Link=%(Link);BaseSize=%(BaseSize);Resize=%(Resize);TintColor=%(TintColor);Color=%(Color);IsAppIcon=%(IsAppIcon);ForegroundScale=%(ForegroundScale);ForegroundFile=%(ForegroundFile)')"
             Overwrite="true"
             WriteOnlyWhenDifferent="true" />
 
@@ -247,15 +261,19 @@
     </Target>
 
     <Target Name="ProcessMauiAssets">
-        <ItemGroup Condition="'$(_ResizetizerIsAndroidApp)' == 'True'">
-            <AndroidAsset Include="@(MauiAsset)" Link="%(FileName)%(Extension)" />
-        </ItemGroup>
-        <ItemGroup Condition="'$(_ResizetizerIsiOSApp)' == 'True'">
-            <Content Include="@(MauiAsset)" Link="%(FileName)%(Extension)" />
-        </ItemGroup>
-        <ItemGroup Condition="'$(_ResizetizerIsUWPApp)' == 'True' Or '$(_ResizetizerIsWinUIApp)' == 'True'">
-            <ContentWithTargetPath Include="@(MauiAsset)" TargetPath="Assets\%(Filename)%(Extension)" />
-        </ItemGroup>
+        <PropertyGroup Condition="'$(_ResizetizerIsUWPApp)' == 'True' Or '$(_ResizetizerIsWinUIApp)' == 'True'">
+            <_MauiAssetFolderName>Assets</_MauiAssetFolderName>
+            <_MauiAssetItemMetadata>TargetPath</_MauiAssetItemMetadata>
+        </PropertyGroup>
+        <GetMauiAssetPath
+            ProjectDirectory="$(MSBuildProjectDirectory)"
+            FolderName="$(_MauiAssetFolderName)"
+            ItemMetadata="$(_MauiAssetItemMetadata)"
+            Input="@(MauiAsset)">
+            <Output ItemName="AndroidAsset"          TaskParameter="Output" Condition="'$(_ResizetizerIsAndroidApp)' == 'True'" />
+            <Output ItemName="Content"               TaskParameter="Output" Condition="'$(_ResizetizerIsiOSApp)' == 'True'" />
+            <Output ItemName="ContentWithTargetPath" TaskParameter="Output" Condition="'$(_ResizetizerIsUWPApp)' == 'True' Or '$(_ResizetizerIsWinUIApp)' == 'True'" />
+        </GetMauiAssetPath>
     </Target>
 
     <Target Name="ProcessMauiSplashScreens"
@@ -297,6 +315,20 @@
             <FileWrites Include="$(_MauiIntermediateStoryboard)" />
         </ItemGroup>
 
+        <!-- UWP / WinUI -->
+        <GenerateSplashAssets
+            Condition="'$(_ResizetizerIsUWPApp)' == 'True' Or '$(_ResizetizerIsWinUIApp)' == 'True'"
+            IntermediateOutputPath="$(_MauiIntermediateSplashScreen)"
+            MauiSplashScreen="@(MauiSplashScreen)"
+        />
+        <ItemGroup Condition="'$(_ResizetizerIsUWPApp)' == 'True' Or '$(_ResizetizerIsWinUIApp)' == 'True'">
+            <_MauiSplashAssets Include="$(_MauiIntermediateSplashScreen)**\*" />
+            <ContentWithTargetPath Include="@(_MauiSplashAssets)">
+                <TargetPath>Assets\%(_MauiSplashAssets.Filename)%(_MauiSplashAssets.Extension)</TargetPath>
+            </ContentWithTargetPath>
+            <FileWrites Include="@(_MauiSplashAssets)" />
+        </ItemGroup>
+
         <!-- Stamp file for Outputs -->
         <Touch Files="$(_MauiSplashStampFile)" AlwaysCreate="True" />
         <ItemGroup>
@@ -314,11 +346,11 @@
         <!-- Copy font files over -->
         <Copy
             SourceFiles="@(MauiFont)"
-            DestinationFolder="$(IntermediateOutputPath)sp\fonts\"
+            DestinationFolder="$(_MauiIntermediateFonts)"
             SkipUnchangedFiles="true" />
 
         <ItemGroup>
-            <_MauiFontCopied Include="$(IntermediateOutputPath)sp\fonts\*" />
+            <_MauiFontCopied Include="$(_MauiIntermediateFonts)*" />
         </ItemGroup>
 
         <ItemGroup Condition="'$(_ResizetizerIsiOSApp)' == 'True' And '@(_MauiFontCopied)' != ''">
@@ -336,7 +368,7 @@
         <!-- Create a partial info.plist for iOS -->
         <CreatePartialInfoPlistTask
             Condition="'$(_ResizetizerIsiOSApp)' == 'True' And ('@(_MauiFontCopied)' != '' Or '$(_MauiStoryboardForPList)' != '')"
-            IntermediateOutputPath="$(IntermediateOutputPath)sp\"
+            IntermediateOutputPath="$(_MauiIntermediateFonts)"
             PlistName="MauiInfo.plist"
             Storyboard="$(_MauiStoryboardForPList)"
             CustomFonts="@(_MauiFontCopied)">
@@ -414,15 +446,10 @@
             ErrorMessage="$(_ResizetizerDefaultInvalidFilenamesErrorMessage)">
         </DetectInvalidResourceOutputFilenamesTask>
 
-        <!-- Where in obj/ to store these -->
-        <PropertyGroup>
-            <ResizetizerIntermediateOutputPath>$(IntermediateOutputPath)resizetize\r\</ResizetizerIntermediateOutputPath>
-        </PropertyGroup>
-
         <!-- Resize the images -->
         <ResizetizeImages
             PlatformType="$(ResizetizerPlatformType)"
-            IntermediateOutputPath="$(ResizetizerIntermediateOutputPath)"
+            IntermediateOutputPath="$(_MauiIntermediateImages)"
             InputsFile="$(_ResizetizerInputsFile)"
             Images="@(MauiImage->Distinct())">
         </ResizetizeImages>
@@ -431,7 +458,7 @@
             <!-- Get Images that were generated -->
             <!-- Either from the task, or if the task was skipped (up to date), use the wildcard lookup -->
             <_ResizetizerCollectedImages Condition="'@(CopiedResources)' != ''" Include="@(CopiedResources)" />
-            <_ResizetizerCollectedImages Condition="'@(CopiedResources)' == ''" Include="$(ResizetizerIntermediateOutputPath)**\*" />
+            <_ResizetizerCollectedImages Condition="'@(CopiedResources)' == ''" Include="$(_MauiIntermediateImages)**\*" />
         </ItemGroup>
 
         <!-- iOS -->
@@ -471,7 +498,7 @@
         <!-- Android -->
         <ItemGroup Condition="'$(_ResizetizerIsAndroidApp)' == 'True'">
             <!-- If we had any images, add that obj/ folder as a resource directory -->
-            <LibraryResourceDirectories Condition="Exists ('$(ResizetizerIntermediateOutputPath)')" Include="$(ResizetizerIntermediateOutputPath)">
+            <LibraryResourceDirectories Condition="Exists ('$(_MauiIntermediateImages)')" Include="$(_MauiIntermediateImages)">
                 <StampFile>$(_ResizetizerStampFile)</StampFile>
             </LibraryResourceDirectories>
 
@@ -506,12 +533,6 @@
     </Target>
 
     <Target Name="_CleanResizetizer">
-        <PropertyGroup>
-            <ResizetizerIntermediateOutputPath>$(IntermediateOutputPath)resizetize\r\</ResizetizerIntermediateOutputPath>
-        </PropertyGroup>
-
-        <RemoveDir Directories="$(ResizetizerIntermediateOutputPath)" Condition="Exists ('$(ResizetizerIntermediateOutputPath)' )" />
-
-        <RemoveDir Directories="$(IntermediateOutputPath)sp" Condition="Exists ( '$(IntermediateOutputPath)sp' )" />
+        <RemoveDir Directories="$(_ResizetizerIntermediateOutputRoot)" Condition="Exists ('$(_ResizetizerIntermediateOutputRoot)' )" />
     </Target>
 </Project>

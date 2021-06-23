@@ -187,7 +187,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.UWP
 
 			if (Element.ReturnType == ReturnType.Next)
 			{
-				FocusManager.TryMoveFocus(FocusNavigationDirection.Next);
+				Control.TryMoveFocus(FocusNavigationDirection.Next);
 			}
 			else
 			{
@@ -297,6 +297,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.UWP
 				() => Control.PlaceholderForegroundFocusBrush, brush => Control.PlaceholderForegroundFocusBrush = brush);
 		}
 
+		[PortHandler]
 		void UpdateText()
 		{
 			Control.Text = _transformedText = Element.UpdateFormsText(Element.Text, Element.TextTransform);
@@ -343,6 +344,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.UWP
 			}
 		}
 
+		[PortHandler]
 		void UpdateReturnType()
 		{
 			if (Control == null || Element == null)

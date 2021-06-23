@@ -5,6 +5,7 @@ using Android.Graphics;
 using Android.Util;
 using Android.Views;
 using AndroidX.AppCompat.Widget;
+using Microsoft.Maui.Controls.Platform;
 using Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;
 using AColor = Android.Graphics.Color;
 using AView = Android.Views.View;
@@ -171,7 +172,7 @@ namespace Microsoft.Maui.Controls.Compatibility.Platform.Android.AppCompat
 			else
 			{
 				NativeButton.Typeface = font.ToTypeface();
-				NativeButton.SetTextSize(ComplexUnitType.Sp, font.ToScaledPixel());
+				NativeButton.SetTextSize(ComplexUnitType.Sp, (float)font.FontSize);
 			}
 		}
 
